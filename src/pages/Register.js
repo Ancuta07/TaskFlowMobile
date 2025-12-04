@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+/* import { useMemo, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -155,6 +155,202 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 8,
     marginTop: 10,
+  },
+  btnText: {
+    textAlign: "center",
+    color: "white",
+    fontWeight: "bold",
+  },
+  error: {
+    color: "red",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  link: {
+    marginTop: 20,
+    textAlign: "center",
+    color: "#007bff",
+  },
+});
+*/
+
+import { useMemo, useState } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { registerUser } from "../utils/auth";
+
+const PASSWORD_REGEX =
+  /^(?=.{12,}$)(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};:'"\\|,.<>\/?`~]).*$/;
+
+export default function Register({ navigation }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const checks = useMemo(
+    () => ({
+      length: password.length >= 12,
+      lower: /[a-z]/.test(password),
+      upper: /[A-Z]/.test(password),
+      digit: /\d/.test(password),
+      special: /[!@#$%^&*()_\-+=\[\]{};:'"\\|,.<>\/?`~]/.test(password),
+      match: password === confirm && password.length > 0,
+    }),
+    [password, confirm]
+  );
+
+  const isPasswordValid = PASSWORD_REGEX.test(password) && checks.match;
+
+  const handleRegister = async () => {
+    setError("");
+    setLoading(true);
+
+    if (!email.includes("@")) {
+      setError("Please enter a valid email");
+      setLoading(false);
+      return;
+    }
+
+    if (!PASSWORD_REGEX.test(password)) {
+      setError("Password does not meet requirements.");
+      setLoading(false);
+      return;
+    }
+
+    if (password !== confirm) {
+      setError("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
+
+    const result = await registerUser(email, password);
+
+    if (result.success) {
+      // Navighează înapoi la Login după register
+      navigation.goBack();
+    } else {
+      setError(result.error);
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>Create Account</Text>
+
+      <TextInput
+        placeholder="Email"
+        value={email}
+        style={styles.input}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        keyboardType="email-address"
+      />
+
+      <TextInput
+        placeholder="Password"
+        secureTextEntry
+        style={styles.input}
+        value={password}
+        onChangeText={setPassword}
+      />
+
+      <TextInput
+        placeholder="Confirm password"
+        secureTextEntry
+        style={styles.input}
+        value={confirm}
+        onChangeText={setConfirm}
+      />
+
+      <PasswordChecklist checks={checks} />
+
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+
+      <TouchableOpacity 
+        style={[styles.button, !isPasswordValid && styles.buttonDisabled]} 
+        onPress={handleRegister}
+        disabled={!isPasswordValid || loading}
+      >
+        <Text style={styles.btnText}>{loading ? "Creating..." : "Register"}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => navigation.goBack()}>
+        <Text style={styles.link}>Already have an account? Login</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+}
+
+function PasswordChecklist({ checks }) {
+  const item = (ok, text) => (
+    <View style={styles.checkItem}>
+      <View
+        style={[styles.checkIcon, { backgroundColor: ok ? "#16A34A" : "#ccc" }]}
+      />
+      <Text style={{ color: ok ? "#16A34A" : "#666" }}>{text}</Text>
+    </View>
+  );
+
+  return (
+    <View style={{ marginTop: 12, marginBottom: 20 }}>
+      {item(checks.length, "Min 12 characters")}
+      {item(checks.lower, "One lowercase letter")}
+      {item(checks.upper, "One uppercase letter")}
+      {item(checks.digit, "One number")}
+      {item(checks.special, "One special character")}
+      {item(checks.match, "Passwords match")}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 20,
+    paddingTop: 60,
+    backgroundColor: '#fff',
+    minHeight: '100%',
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: "bold",
+    marginBottom: 25,
+    textAlign: "center",
+  },
+  input: {
+    backgroundColor: "#eee",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 15,
+  },
+  checkItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+    gap: 10,
+  },
+  checkIcon: {
+    width: 14,
+    height: 14,
+    borderRadius: 4,
+  },
+  button: {
+    backgroundColor: "#007bff",
+    padding: 14,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  buttonDisabled: {
+    backgroundColor: "#ccc",
   },
   btnText: {
     textAlign: "center",
