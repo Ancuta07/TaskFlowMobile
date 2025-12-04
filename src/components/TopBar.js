@@ -1,13 +1,10 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-
-// Importăm logo (cea mai sigură metodă în Expo)
-const logo = require("../../assets/TaskFlowLogo.png");
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function TopBar({ onMenuPress }) {
   return (
     <View style={styles.container}>
-      {/* LOGO */}
-      <Image source={logo} style={styles.logo} />
+      {/* LOGO - folosește text dacă nu ai imaginea */}
+      <Text style={styles.logoText}>TaskFlow</Text>
 
       {/* TITLU */}
       <Text style={styles.title}>TaskFlow</Text>
@@ -31,10 +28,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 
-  logo: {
+  logoText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#007bff",
     width: 40,
-    height: 40,
-    resizeMode: "contain",
   },
 
   title: {
@@ -43,7 +41,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     color: "#333",
-    marginLeft: -40, // ajustează centarea vizuală
   },
 
   menuButton: {

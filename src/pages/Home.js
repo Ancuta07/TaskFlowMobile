@@ -1,6 +1,6 @@
 import { Picker } from "@react-native-picker/picker";
 import { useMemo, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 import Sidebar from "../components/Sidebar";
 import TaskForm from "../components/TaskForm";
@@ -77,6 +77,20 @@ export default function Home({
 
       {/* 🟨 CONTENT */}
       <ScrollView contentContainerStyle={styles.container}>
+        {/* 🔵 BUTOANE LIST/CALENDAR */}
+        <View style={styles.viewToggle}>
+          <TouchableOpacity style={[styles.viewButton, styles.activeButton]}>
+            <Text style={styles.viewButtonText}>📝 List View</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.viewButton}
+            onPress={() => navigation.navigate('Calendar')}
+          >
+            <Text style={styles.viewButtonText}>📅 Calendar View</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* 🔵 FILTRE */}
         <View style={styles.filters}>
           <Picker
@@ -142,6 +156,26 @@ const styles = StyleSheet.create({
   container: {
     padding: 12,
     paddingBottom: 40,
+  },
+  viewToggle: {
+    flexDirection: 'row',
+    marginBottom: 15,
+    justifyContent: 'space-around',
+  },
+  viewButton: {
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: '#eee',
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  activeButton: {
+    backgroundColor: '#007bff',
+  },
+  viewButtonText: {
+    textAlign: 'center',
+    fontWeight: 'bold',
+    color: '#333',
   },
   filters: {
     marginBottom: 15,
