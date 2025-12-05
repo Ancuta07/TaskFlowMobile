@@ -1,10 +1,18 @@
-import { FlatList, StyleSheet, Text } from "react-native";
+import { useContext } from "react";
+import { FlatList, StyleSheet, Text, View } from "react-native";
+import { ThemeContext } from "../context/ThemeContext";
 import TaskItem from "./TaskItem";
 
 export default function TaskList({ tasks, onDelete, onUpdate, onEdit }) {
-  if (!tasks.length) {
+  const { dark } = useContext(ThemeContext);
+
+  if (!tasks || tasks.length === 0) {
     return (
-      <Text style={styles.empty}>No tasks yet. Add your first task above.</Text>
+      <View>
+        <Text style={[styles.empty, { color: dark ? "#aaa" : "#777" }]}>
+          No tasks yet. Add your first task above.
+        </Text>
+      </View>
     );
   }
 
@@ -12,6 +20,7 @@ export default function TaskList({ tasks, onDelete, onUpdate, onEdit }) {
     <FlatList
       data={tasks}
       keyExtractor={(item) => item.id}
+      contentContainerStyle={styles.listContainer}
       renderItem={({ item }) => (
         <TaskItem
           task={item}
@@ -28,6 +37,9 @@ const styles = StyleSheet.create({
   empty: {
     textAlign: "center",
     marginTop: 40,
-    color: "#777",
+    fontSize: 16,
+  },
+  listContainer: {
+    paddingBottom: 16,
   },
 });

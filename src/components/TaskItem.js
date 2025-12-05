@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useContext, useMemo } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ThemeContext } from "../context/ThemeContext";
 
 function statusBadgeColor(status) {
   switch (status) {
@@ -15,6 +16,8 @@ function statusBadgeColor(status) {
 }
 
 export default function TaskItem({ task, onDelete, onUpdate, onEdit }) {
+  const { dark } = useContext(ThemeContext);
+
   const isOverdue = useMemo(() => {
     if (!task.deadline) return false;
     const due = new Date(task.deadline).getTime();
@@ -24,9 +27,18 @@ export default function TaskItem({ task, onDelete, onUpdate, onEdit }) {
   const effectiveStatus = isOverdue ? "Overdue" : task.status;
 
   return (
-    <View style={[styles.container, { borderLeftColor: task.color }]}>
-      <View style={styles.headerRow}>
-        <Text style={styles.title}>{task.title}</Text>
+    <View
+      style={[
+        styles.card,
+        { borderLeftColor: task.color },
+        dark && styles.cardDark,
+      ]}
+    >
+      {/* TITLE + BADGE */}
+      <View style={styles.row}>
+        <Text style={[styles.title, dark && { color: "#fff" }]}>
+          {task.title}
+        </Text>
 
         <Text
           style={[
@@ -38,20 +50,27 @@ export default function TaskItem({ task, onDelete, onUpdate, onEdit }) {
         </Text>
       </View>
 
+      {/* DESCRIPTION */}
       {task.description ? (
-        <Text style={styles.desc}>{task.description}</Text>
+        <Text style={[styles.desc, dark && { color: "#ddd" }]}>
+          {task.description}
+        </Text>
       ) : null}
 
+      {/* META INFO */}
       <View style={styles.meta}>
         {task.deadline && (
-          <Text style={styles.metaText}>
+          <Text style={[styles.metaText, dark && { color: "#bbb" }]}>
             Deadline: {new Date(task.deadline).toLocaleString()}
           </Text>
         )}
-        <Text style={styles.metaText}>Priority: {task.priority}</Text>
+        <Text style={[styles.metaText, dark && { color: "#bbb" }]}>
+          Priority: {task.priority}
+        </Text>
       </View>
 
-      <View style={styles.actions}>
+      {/* ACTION BUTTONS */}
+      <View style={styles.buttons}>
         <TouchableOpacity style={styles.btn} onPress={onEdit}>
           <Text>Edit</Text>
         </TouchableOpacity>
@@ -100,48 +119,64 @@ export default function TaskItem({ task, onDelete, onUpdate, onEdit }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  card: {
     borderLeftWidth: 8,
     backgroundColor: "#fff",
-    padding: 12,
-    marginBottom: 10,
-    borderRadius: 8,
-    elevation: 2,
+    padding: 14,
+    marginBottom: 12,
+    borderRadius: 10,
+    elevation: 3,
   },
-  headerRow: {
+  cardDark: {
+    backgroundColor: "#1e1e1e",
+  },
+
+  row: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
   },
+
   title: {
+    fontSize: 17,
     fontWeight: "bold",
-    fontSize: 16,
   },
+
   badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
     color: "white",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
+    fontWeight: "600",
   },
+
   desc: {
-    marginVertical: 6,
+    marginTop: 6,
+    marginBottom: 8,
     color: "#555",
   },
+
   meta: {
-    marginVertical: 4,
+    marginBottom: 10,
   },
+
   metaText: {
     color: "#777",
   },
-  actions: {
+
+  buttons: {
     flexDirection: "row",
     gap: 10,
-    marginTop: 8,
+    flexWrap: "wrap",
   },
+
   btn: {
-    backgroundColor: "#eee",
-    padding: 6,
+    backgroundColor: "#ededed",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 6,
   },
+
   delete: {
     backgroundColor: "#c62828",
   },
