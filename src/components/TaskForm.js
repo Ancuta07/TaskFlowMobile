@@ -1,17 +1,20 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import {
-  Platform,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { ThemeContext } from "../context/ThemeContext";
 import { generateId } from "../utils/storage";
 
 const PRIORITIES = ["High", "Medium", "Low"];
+
+// 🎨 Culori presetate
+const COLORS = ["#3f51b5", "#ff5252", "#4caf50", "#ff9800", "#9c27b0"];
 
 export default function TaskForm({
   mode = "add",
@@ -19,13 +22,15 @@ export default function TaskForm({
   onSubmit,
   onCancelEdit,
 }) {
+  const { dark } = useContext(ThemeContext);
+
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [deadline, setDeadline] = useState(null);
   const [color, setColor] = useState("#3f51b5");
   const [priority, setPriority] = useState("Medium");
 
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isPickerVisible, setPickerVisible] = useState(false);
 
   useEffect(() => {
     if (initialTask) {
@@ -35,13 +40,17 @@ export default function TaskForm({
       setColor(initialTask.color);
       setPriority(initialTask.priority);
     } else {
-      setTitle("");
-      setDesc("");
-      setDeadline(null);
-      setColor("#3f51b5");
-      setPriority("Medium");
+      resetForm();
     }
   }, [initialTask]);
+
+  const resetForm = () => {
+    setTitle("");
+    setDesc("");
+    setDeadline(null);
+    setColor("#3f51b5");
+    setPriority("Medium");
+  };
 
   const handleSubmit = () => {
     if (!title.trim()) return;
@@ -66,58 +75,58 @@ export default function TaskForm({
         createdAt: nowISO,
       });
 
-      setTitle("");
-      setDesc("");
-      setDeadline(null);
-      setColor("#3f51b5");
-      setPriority("Medium");
+      resetForm();
     } else {
       onSubmit(base);
     }
   };
 
   return (
-    <View style={styles.form}>
+    <View style={[styles.form, dark && styles.formDark]}>
+      {/* Title */}
       <TextInput
         placeholder="Title *"
-        style={styles.input}
+        placeholderTextColor={dark ? "#aaa" : "#666"}
+        style={[styles.input, dark && styles.inputDark]}
         value={title}
         onChangeText={setTitle}
       />
 
+      {/* Deadline picker */}
       <TouchableOpacity
-        style={styles.dateButton}
-        onPress={() => setShowDatePicker(true)}
+        style={[styles.dateButton, dark && styles.inputDark]}
+        onPress={() => setPickerVisible(true)}
       >
-        <Text style={styles.dateButtonText}>
+        <Text style={{ color: dark ? "#eee" : "#333" }}>
           {deadline ? deadline.toLocaleString() : "Pick a deadline"}
         </Text>
       </TouchableOpacity>
 
-      {showDatePicker && (
-        <DateTimePicker
-          value={deadline || new Date()}
-          mode="datetime"
-          display={Platform.OS === "ios" ? "spinner" : "default"}
-          onChange={(event, date) => {
-            setShowDatePicker(false);
-            if (date) setDeadline(date);
-          }}
-        />
-      )}
+      <DateTimePickerModal
+        isVisible={isPickerVisible}
+        mode="datetime"
+        onConfirm={(date) => {
+          setDeadline(date);
+          setPickerVisible(false);
+        }}
+        onCancel={() => setPickerVisible(false)}
+      />
 
+      {/* Description */}
       <TextInput
         placeholder="Description"
+        placeholderTextColor={dark ? "#aaa" : "#666"}
         multiline
-        style={[styles.input, styles.textarea]}
+        style={[styles.input, styles.textarea, dark && styles.inputDark]}
         value={desc}
         onChangeText={setDesc}
       />
 
+      {/* Priority + Color */}
       <View style={styles.row}>
         <Picker
           selectedValue={priority}
-          style={styles.picker}
+          style={[styles.picker, dark && styles.pickerDark]}
           onValueChange={setPriority}
         >
           {PRIORITIES.map((p) => (
@@ -125,15 +134,25 @@ export default function TaskForm({
           ))}
         </Picker>
 
-        {/* Color Picker simplu */}
-        <TextInput
-          style={[styles.input, { flex: 1 }]}
-          value={color}
-          onChangeText={setColor}
-          placeholder="Color HEX"
-        />
+        {/* 🎨 SELECTOR DE CULORI (înlocuiește TextInput-ul HEX) */}
+        <View style={[styles.colorBox, dark && styles.inputDark]}>
+          <View style={styles.colorRow}>
+            {COLORS.map((c) => (
+              <TouchableOpacity
+                key={c}
+                onPress={() => setColor(c)}
+                style={[
+                  styles.colorDot,
+                  { backgroundColor: c },
+                  color === c && { borderWidth: 3, borderColor: "#000" },
+                ]}
+              />
+            ))}
+          </View>
+        </View>
       </View>
 
+      {/* Submit */}
       <TouchableOpacity style={styles.submit} onPress={handleSubmit}>
         <Text style={styles.submitText}>
           {mode === "edit" ? "Save changes" : "Add Task"}
@@ -152,37 +171,76 @@ export default function TaskForm({
 const styles = StyleSheet.create({
   form: {
     backgroundColor: "#fff",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 15,
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+    elevation: 3,
   },
+  formDark: {
+    backgroundColor: "#1a1a1a",
+  },
+
   input: {
     backgroundColor: "#eee",
-    padding: 10,
+    padding: 12,
     borderRadius: 8,
     marginBottom: 10,
+    fontSize: 16,
   },
+  inputDark: {
+    backgroundColor: "#333",
+    color: "#fff",
+  },
+
   textarea: {
     height: 70,
+    textAlignVertical: "top",
   },
+
   dateButton: {
     backgroundColor: "#ddd",
-    padding: 10,
+    padding: 12,
     borderRadius: 8,
     marginBottom: 10,
-  },
-  dateButtonText: {
-    color: "#333",
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
   },
 
   picker: {
     flex: 1,
     backgroundColor: "#eee",
+    borderRadius: 8,
   },
+  pickerDark: {
+    backgroundColor: "#333",
+    color: "#fff",
+  },
+
+  row: {
+    flexDirection: "row",
+    gap: 10,
+  },
+
+  /* 🎨 Stiluri pentru selectorul de culori */
+  colorBox: {
+    flex: 1,
+    padding: 8,
+    backgroundColor: "#eee",
+    borderRadius: 8,
+    justifyContent: "center",
+  },
+
+  colorRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+
+  colorDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderColor: "#555",
+    borderWidth: 1,
+  },
+
   submit: {
     backgroundColor: "#007bff",
     padding: 12,
@@ -190,10 +248,12 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   submitText: {
-    color: "white",
     textAlign: "center",
+    color: "white",
     fontWeight: "bold",
+    fontSize: 16,
   },
+
   cancel: {
     padding: 10,
     marginTop: 8,
