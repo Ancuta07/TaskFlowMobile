@@ -1,6 +1,5 @@
-// App.js
 import { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { ActivityIndicator, SafeAreaView, StyleSheet, View } from "react-native";
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -27,7 +26,6 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // verifică user logat
   useEffect(() => {
     getCurrentUser().then((usr) => {
       setUser(usr);
@@ -35,7 +33,6 @@ export default function App() {
     });
   }, []);
 
-  // ascultă în timp real task-urile
   useEffect(() => {
     if (!user) return;
     return subscribeToTasks(user.uid, setTasks);
@@ -51,51 +48,65 @@ export default function App() {
 
   return (
     <ThemeProvider>
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          {!user ? (
-            <>
-              <Stack.Screen name="Login">
-                {(props) => (
-                  <Login {...props} onLoginSuccess={(u) => setUser(u)} />
-                )}
-              </Stack.Screen>
+      <SafeAreaView style={styles.safeArea}>
+        <NavigationContainer>
+          <Stack.Navigator 
+            screenOptions={{ 
+              headerShown: false,
+              contentStyle: {
+                backgroundColor: '#fff'
+              }
+            }}
+          >
+            {!user ? (
+              <>
+                <Stack.Screen name="Login">
+                  {(props) => (
+                    <Login {...props} onLoginSuccess={(u) => setUser(u)} />
+                  )}
+                </Stack.Screen>
 
-              <Stack.Screen name="Register" component={Register} />
-            </>
-          ) : (
-            <>
-              <Stack.Screen name="Home">
-                {(props) => (
-                  <Home
-                    {...props}
-                    user={user}
-                    tasks={tasks}
-                    onAdd={(t) => addTask(t, user.uid)}
-                    onDelete={deleteTask}
-                    onUpdate={updateTask}
-                    onLogout={() => {
-                      logoutUser();
-                      setUser(null);
-                      setTasks([]);
-                    }}
-                  />
-                )}
-              </Stack.Screen>
+                <Stack.Screen name="Register" component={Register} />
+              </>
+            ) : (
+              <>
+                <Stack.Screen name="Home">
+                  {(props) => (
+                    <Home
+                      {...props}
+                      user={user}
+                      tasks={tasks}
+                      onAdd={(t) => addTask(t, user.uid)}
+                      onDelete={deleteTask}
+                      onUpdate={updateTask}
+                      onLogout={() => {
+                        logoutUser();
+                        setUser(null);
+                        setTasks([]);
+                      }}
+                    />
+                  )}
+                </Stack.Screen>
 
-              <Stack.Screen name="Calendar" component={CalendarView} />
-            </>
-          )}
-        </Stack.Navigator>
-      </NavigationContainer>
+                <Stack.Screen name="Calendar" component={CalendarView} />
+              </>
+            )}
+          </Stack.Navigator>
+        </NavigationContainer>
+      </SafeAreaView>
     </ThemeProvider>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff'
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: '#fff'
   },
 });
