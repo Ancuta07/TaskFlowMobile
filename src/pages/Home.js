@@ -1,7 +1,8 @@
-import { Picker } from "@react-native-picker/picker";
 import { useContext, useMemo, useState } from "react";
 import {
   FlatList,
+  Modal,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -10,9 +11,56 @@ import {
 
 import Sidebar from "../components/Sidebar";
 import TaskForm from "../components/TaskForm";
-import TaskItem from "../components/TaskItem"; // <-- folosit direct
+import TaskItem from "../components/TaskItem";
 import TopBar from "../components/TopBar";
 import { ThemeContext } from "../context/ThemeContext";
+
+// Componentă pentru dropdown custom (mai frumos pe iOS)
+function CustomDropdown({ value, options, onSelect, label, dark }) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <>
+      <TouchableOpacity
+        style={[styles.dropdownButton, dark && styles.dropdownButtonDark]}
+        onPress={() => setVisible(true)}
+      >
+        <Text style={[styles.dropdownText, dark && styles.dropdownTextDark]}>
+          {value || label}
+        </Text>
+        <Text style={dark && { color: '#fff' }}>▼</Text>
+      </TouchableOpacity>
+
+      <Modal visible={visible} transparent animationType="slide">
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          onPress={() => setVisible(false)}
+          activeOpacity={1}
+        >
+          <View style={[styles.modalContent, dark && styles.modalContentDark]}>
+            <FlatList
+              data={options}
+              keyExtractor={(item) => item.value}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.option, dark && styles.optionDark]}
+                  onPress={() => {
+                    onSelect(item.value);
+                    setVisible(false);
+                  }}
+                >
+                  <Text style={[styles.optionText, dark && styles.optionTextDark]}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </>
+  );
+}
 
 export default function Home({
   tasks,
@@ -53,10 +101,10 @@ export default function Home({
 
     switch (sortOption) {
       case "dateAsc":
-        result.sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+        result.sort((a, b) => (new Date(a.deadline || 0) - new Date(b.deadline || 0)));
         break;
       case "dateDesc":
-        result.sort((a, b) => new Date(b.deadline) - new Date(a.deadline));
+        result.sort((a, b) => (new Date(b.deadline || 0) - new Date(a.deadline || 0)));
         break;
       case "alphaAsc":
         result.sort((a, b) => a.title.localeCompare(b.title));
@@ -69,9 +117,32 @@ export default function Home({
     return result;
   }, [tasks, statusFilter, priorityFilter, sortOption]);
 
+  // Opțiuni pentru dropdown-uri
+  const statusOptions = [
+    { label: "All Statuses", value: "All" },
+    { label: "Upcoming", value: "Upcoming" },
+    { label: "Overdue", value: "Overdue" },
+    { label: "Completed", value: "Completed" },
+    { label: "Canceled", value: "Canceled" },
+  ];
+
+  const priorityOptions = [
+    { label: "All Priorities", value: "All" },
+    { label: "High", value: "High" },
+    { label: "Medium", value: "Medium" },
+    { label: "Low", value: "Low" },
+  ];
+
+  const sortOptions = [
+    { label: "Deadline ↑", value: "dateAsc" },
+    { label: "Deadline ↓", value: "dateDesc" },
+    { label: "A → Z", value: "alphaAsc" },
+    { label: "Z → A", value: "alphaDesc" },
+  ];
+
   return (
     <View
-      style={[styles.screen, { backgroundColor: dark ? "#121212" : "#f4f4f4" }]}
+      style={[styles.screen, { backgroundColor: dark ? "#121212" : "#f5f5f5" }]}
     >
       <TopBar onMenuPress={() => setSidebarOpen(true)} />
 
@@ -101,12 +172,12 @@ export default function Home({
                 style={[styles.viewButton, styles.activeButton]}
               >
                 <Text style={[styles.viewButtonText, { color: "#fff" }]}>
-                  📝 List View
+                  📝 List
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.viewButton, dark && styles.darkCard]}
+                style={[styles.viewButton, dark && styles.viewButtonDark]}
                 onPress={() => navigation.navigate("Calendar", { tasks })}
               >
                 <Text
@@ -115,7 +186,7 @@ export default function Home({
                     { color: dark ? "#fff" : "#333" },
                   ]}
                 >
-                  📅 Calendar View
+                  📅 Calendar
                 </Text>
               </TouchableOpacity>
             </View>
@@ -128,39 +199,29 @@ export default function Home({
                 Filters
               </Text>
 
-              <Picker
-                style={[styles.picker, dark && styles.pickerDark]}
-                selectedValue={statusFilter}
-                onValueChange={setStatusFilter}
-              >
-                <Picker.Item label="All Statuses" value="All" />
-                <Picker.Item label="Upcoming" value="Upcoming" />
-                <Picker.Item label="Overdue" value="Overdue" />
-                <Picker.Item label="Completed" value="Completed" />
-                <Picker.Item label="Canceled" value="Canceled" />
-              </Picker>
+              <CustomDropdown
+                value={statusFilter === "All" ? "All Statuses" : statusFilter}
+                options={statusOptions}
+                onSelect={setStatusFilter}
+                label="Select Status"
+                dark={dark}
+              />
 
-              <Picker
-                style={[styles.picker, dark && styles.pickerDark]}
-                selectedValue={priorityFilter}
-                onValueChange={setPriorityFilter}
-              >
-                <Picker.Item label="All Priorities" value="All" />
-                <Picker.Item label="High" value="High" />
-                <Picker.Item label="Medium" value="Medium" />
-                <Picker.Item label="Low" value="Low" />
-              </Picker>
+              <CustomDropdown
+                value={priorityFilter === "All" ? "All Priorities" : priorityFilter}
+                options={priorityOptions}
+                onSelect={setPriorityFilter}
+                label="Select Priority"
+                dark={dark}
+              />
 
-              <Picker
-                style={[styles.picker, dark && styles.pickerDark]}
-                selectedValue={sortOption}
-                onValueChange={setSortOption}
-              >
-                <Picker.Item label="Deadline ↑" value="dateAsc" />
-                <Picker.Item label="Deadline ↓" value="dateDesc" />
-                <Picker.Item label="A → Z" value="alphaAsc" />
-                <Picker.Item label="Z → A" value="alphaDesc" />
-              </Picker>
+              <CustomDropdown
+                value={sortOptions.find(opt => opt.value === sortOption)?.label || "Sort by"}
+                options={sortOptions}
+                onSelect={setSortOption}
+                label="Sort by"
+                dark={dark}
+              />
             </View>
 
             {/* ADD / EDIT FORM */}
@@ -173,16 +234,16 @@ export default function Home({
           </>
         }
         ListEmptyComponent={
-          <Text
-            style={{
-              textAlign: "center",
-              marginTop: 40,
-              fontSize: 16,
-              color: dark ? "#aaa" : "#555",
-            }}
-          >
-            No tasks yet. Add your first task above.
-          </Text>
+          <View style={styles.emptyContainer}>
+            <Text
+              style={[
+                styles.emptyText,
+                { color: dark ? "#aaa" : "#555" },
+              ]}
+            >
+              No tasks yet. Add your first task above.
+            </Text>
+          </View>
         }
       />
     </View>
@@ -193,62 +254,117 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
   },
-
   container: {
-    padding: 12,
-    paddingBottom: 40,
+    padding: 16,
+    paddingBottom: Platform.OS === 'ios' ? 30 : 40,
   },
-
   viewToggle: {
     flexDirection: "row",
     marginBottom: 20,
+    gap: 10,
   },
-
   viewButton: {
-    padding: 12,
-    borderRadius: 10,
-    backgroundColor: "#eee",
+    padding: Platform.OS === 'ios' ? 14 : 12,
+    borderRadius: 12,
+    backgroundColor: "#e0e0e0",
     flex: 1,
-    marginHorizontal: 5,
     elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-
+  viewButtonDark: {
+    backgroundColor: "#333",
+  },
   activeButton: {
     backgroundColor: "#007bff",
   },
-
   viewButtonText: {
     textAlign: "center",
-    fontWeight: "bold",
+    fontWeight: "600",
     fontSize: 16,
   },
-
   filterCard: {
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 15,
+    borderRadius: 16,
+    padding: 20,
     marginBottom: 20,
     elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
-
   darkCard: {
     backgroundColor: "#1e1e1e",
   },
-
   filterTitle: {
     fontSize: 18,
     fontWeight: "600",
-    marginBottom: 10,
+    marginBottom: 16,
   },
-
-  picker: {
-    backgroundColor: "#eee",
+  
+  // Styles for CustomDropdown
+  dropdownButton: {
+    backgroundColor: "#f0f0f0",
+    padding: Platform.OS === 'ios' ? 14 : 12,
+    borderRadius: 10,
     marginBottom: 12,
-    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
-
-  pickerDark: {
+  dropdownButtonDark: {
     backgroundColor: "#333",
-    color: "#fff",
+    borderColor: '#444',
+  },
+  dropdownText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  dropdownTextDark: {
+    color: '#fff',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '50%',
+    paddingTop: 20,
+  },
+  modalContentDark: {
+    backgroundColor: '#1e1e1e',
+  },
+  option: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  optionDark: {
+    borderBottomColor: '#333',
+  },
+  optionText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  optionTextDark: {
+    color: '#fff',
+  },
+  
+  emptyContainer: {
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    textAlign: 'center',
   },
 });
