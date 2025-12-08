@@ -1,4 +1,4 @@
-/* import { useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -7,188 +7,15 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { ThemeContext } from "../context/ThemeContext";
 import { registerUser } from "../utils/auth";
 
 const PASSWORD_REGEX =
   /^(?=.{12,}$)(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};:'"\\|,.<>\/?`~]).*$/;
 
 export default function Register({ navigation }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { dark } = useContext(ThemeContext);
 
-  const checks = useMemo(
-    () => ({
-      length: password.length >= 12,
-      lower: /[a-z]/.test(password),
-      upper: /[A-Z]/.test(password),
-      digit: /\d/.test(password),
-      special: /[!@#$%^&*()_\-+=\[\]{};:'"\\|,.<>\/?`~]/.test(password),
-      match: password === confirm && password.length > 0,
-    }),
-    [password, confirm]
-  );
-
-  const handleRegister = async () => {
-    setError("");
-    setLoading(true);
-
-    if (!PASSWORD_REGEX.test(password)) {
-      setError("Password does not meet requirements.");
-      setLoading(false);
-      return;
-    }
-
-    if (password !== confirm) {
-      setError("Passwords do not match.");
-      setLoading(false);
-      return;
-    }
-
-    const result = await registerUser(email, password);
-
-    if (result.success) {
-      navigation.navigate("Login");
-    } else {
-      setError(result.error);
-    }
-
-    setLoading(false);
-  };
-
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
-
-      <TextInput
-        placeholder="Email"
-        value={email}
-        style={styles.input}
-        onChangeText={setEmail}
-      />
-
-      <TextInput
-        placeholder="Password"
-        secureTextEntry
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-      />
-
-      <TextInput
-        placeholder="Confirm password"
-        secureTextEntry
-        style={styles.input}
-        value={confirm}
-        onChangeText={setConfirm}
-      />
-
-      <PasswordChecklist checks={checks} />
-
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-
-      <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.btnText}>{loading ? "..." : "Register"}</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-        <Text style={styles.link}>Already have an account? Login</Text>
-      </TouchableOpacity>
-    </ScrollView>
-  );
-}
-
-function PasswordChecklist({ checks }) {
-  const item = (ok, text) => (
-    <View style={styles.checkItem}>
-      <View
-        style={[styles.checkIcon, { backgroundColor: ok ? "#16A34A" : "#aaa" }]}
-      />
-      <Text>{text}</Text>
-    </View>
-  );
-
-  return (
-    <View style={{ marginTop: 12 }}>
-      {item(checks.length, "Min 12 characters")}
-      {item(checks.lower, "One lowercase letter")}
-      {item(checks.upper, "One uppercase letter")}
-      {item(checks.digit, "One number")}
-      {item(checks.special, "One special character")}
-      {item(checks.match, "Passwords match")}
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    marginTop: 40,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    marginBottom: 25,
-    textAlign: "center",
-  },
-  input: {
-    backgroundColor: "#eee",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 15,
-  },
-  checkItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 6,
-    gap: 10,
-  },
-  checkIcon: {
-    width: 14,
-    height: 14,
-    borderRadius: 4,
-  },
-  button: {
-    backgroundColor: "#007bff",
-    padding: 14,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  btnText: {
-    textAlign: "center",
-    color: "white",
-    fontWeight: "bold",
-  },
-  error: {
-    color: "red",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  link: {
-    marginTop: 20,
-    textAlign: "center",
-    color: "#007bff",
-  },
-});
-*/
-
-import { useMemo, useState } from "react";
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
-import { registerUser } from "../utils/auth";
-
-const PASSWORD_REGEX =
-  /^(?=.{12,}$)(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};:'"\\|,.<>\/?`~]).*$/;
-
-export default function Register({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -234,7 +61,6 @@ export default function Register({ navigation }) {
     const result = await registerUser(email, password);
 
     if (result.success) {
-      // Navighează înapoi la Login după register
       navigation.goBack();
     } else {
       setError(result.error);
@@ -244,13 +70,22 @@ export default function Register({ navigation }) {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
+    <ScrollView
+      contentContainerStyle={[
+        styles.container,
+        dark && { backgroundColor: "#1e1e1e" },
+      ]}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Text style={[styles.title, dark && { color: "#fff" }]}>
+        Create Account
+      </Text>
 
       <TextInput
         placeholder="Email"
+        placeholderTextColor={dark ? "#bbb" : "#666"}
         value={email}
-        style={styles.input}
+        style={[styles.input, dark && styles.inputDark]}
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
@@ -258,67 +93,94 @@ export default function Register({ navigation }) {
 
       <TextInput
         placeholder="Password"
+        placeholderTextColor={dark ? "#bbb" : "#666"}
         secureTextEntry
-        style={styles.input}
+        style={[styles.input, dark && styles.inputDark]}
         value={password}
         onChangeText={setPassword}
       />
 
       <TextInput
-        placeholder="Confirm password"
+        placeholder="Confirm Password"
+        placeholderTextColor={dark ? "#bbb" : "#666"}
         secureTextEntry
-        style={styles.input}
+        style={[styles.input, dark && styles.inputDark]}
         value={confirm}
         onChangeText={setConfirm}
       />
 
-      <PasswordChecklist checks={checks} />
+      <PasswordChecklist checks={checks} dark={dark} />
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? (
+        <Text style={[styles.error, dark && { color: "#ff6b6b" }]}>{error}</Text>
+      ) : null}
 
-      <TouchableOpacity 
-        style={[styles.button, !isPasswordValid && styles.buttonDisabled]} 
+      <TouchableOpacity
+        style={[
+          styles.button,
+          !isPasswordValid && styles.buttonDisabled,
+          dark && styles.buttonDark,
+        ]}
         onPress={handleRegister}
         disabled={!isPasswordValid || loading}
       >
-        <Text style={styles.btnText}>{loading ? "Creating..." : "Register"}</Text>
+        <Text
+          style={[
+            styles.btnText,
+            dark && styles.btnTextDark,
+          ]}
+        >
+          {loading ? "Creating..." : "Register"}
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.goBack()}>
-        <Text style={styles.link}>Already have an account? Login</Text>
+        <Text
+          style={[
+            styles.link,
+            dark && { color: "#4dabf7" },
+          ]}
+        >
+          Already have an account? Login
+        </Text>
       </TouchableOpacity>
     </ScrollView>
   );
 }
 
-function PasswordChecklist({ checks }) {
-  const item = (ok, text) => (
+function PasswordChecklist({ checks, dark }) {
+  const row = (ok, text) => (
     <View style={styles.checkItem}>
       <View
-        style={[styles.checkIcon, { backgroundColor: ok ? "#16A34A" : "#ccc" }]}
+        style={[
+          styles.checkIcon,
+          { backgroundColor: ok ? "#16A34A" : dark ? "#555" : "#ccc" },
+        ]}
       />
-      <Text style={{ color: ok ? "#16A34A" : "#666" }}>{text}</Text>
+      <Text style={{ color: ok ? "#16A34A" : dark ? "#ccc" : "#666" }}>
+        {text}
+      </Text>
     </View>
   );
 
   return (
-    <View style={{ marginTop: 12, marginBottom: 20 }}>
-      {item(checks.length, "Min 12 characters")}
-      {item(checks.lower, "One lowercase letter")}
-      {item(checks.upper, "One uppercase letter")}
-      {item(checks.digit, "One number")}
-      {item(checks.special, "One special character")}
-      {item(checks.match, "Passwords match")}
+    <View style={styles.checklist}>
+      {row(checks.length, "Min 12 characters")}
+      {row(checks.lower, "One lowercase letter")}
+      {row(checks.upper, "One uppercase letter")}
+      {row(checks.digit, "One number")}
+      {row(checks.special, "One special character")}
+      {row(checks.match, "Passwords match")}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flexGrow: 1,
     padding: 20,
-    paddingTop: 60,
-    backgroundColor: '#fff',
-    minHeight: '100%',
+    justifyContent: "center",
+    backgroundColor: "#fff",
   },
   title: {
     fontSize: 32,
@@ -331,11 +193,22 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 15,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    color: "#333",
+  },
+  inputDark: {
+    backgroundColor: "#333",
+    borderColor: "#555",
+    color: "#fff",
+  },
+  checklist: {
+    marginBottom: 15,
   },
   checkItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 6,
     gap: 10,
   },
   checkIcon: {
@@ -349,6 +222,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 10,
   },
+  buttonDark: {
+    backgroundColor: "#4dabf7",
+  },
   buttonDisabled: {
     backgroundColor: "#ccc",
   },
@@ -356,6 +232,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "white",
     fontWeight: "bold",
+  },
+  btnTextDark: {
+    color: "#1e1e1e",
   },
   error: {
     color: "red",

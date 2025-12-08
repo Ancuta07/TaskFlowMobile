@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Modal,
@@ -15,7 +15,7 @@ import TaskItem from "../components/TaskItem";
 import TopBar from "../components/TopBar";
 import { ThemeContext } from "../context/ThemeContext";
 
-// Componentă pentru dropdown custom (mai frumos pe iOS)
+/* Dropdown UI */
 function CustomDropdown({ value, options, onSelect, label, dark }) {
   const [visible, setVisible] = useState(false);
 
@@ -63,31 +63,64 @@ function CustomDropdown({ value, options, onSelect, label, dark }) {
 }
 
 export default function Home({
-  tasks,
+  tasks: externalTasks,
   onAdd,
   onDelete,
   onUpdate,
   navigation,
   onLogout,
 }) {
+  const [tasks, setTasks] = useState([]);
   const [editingTask, setEditingTask] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { dark } = useContext(ThemeContext);
 
+  /* Load tasks initially from Firebase props */
+  useEffect(() => {
+    if (externalTasks) {
+      setTasks(externalTasks);
+    }
+  }, [externalTasks]);
+
+  /* Local state for filters */
   const [statusFilter, setStatusFilter] = useState("All");
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [sortOption, setSortOption] = useState("dateAsc");
 
+  /* Unified function: add new task + sync backend */
+  const handleAdd = async (task) => {
+    setTasks(prev => [...prev, task]);
+    await onAdd(task); // Firebase funcție deja existentă
+  };
+
+  /* Update task (edit, complete, cancel etc.) */
+  const handleUpdate = async (id, updates) => {
+    setTasks(prev =>
+      prev.map(task =>
+        task.id === id ? { ...task, ...updates } : task
+      )
+    );
+    await onUpdate(id, updates);
+  };
+
+  /* Delete task locally + backend */
+  const handleDelete = async (id) => {
+    setTasks(prev => prev.filter(task => task.id !== id));
+    await onDelete(id);
+  };
+
+  /* Handle add vs edit submit */
   const handleSubmit = (data) => {
     if (editingTask) {
-      onUpdate(editingTask.id, data);
+      handleUpdate(editingTask.id, data);
       setEditingTask(null);
     } else {
-      onAdd(data);
+      handleAdd(data);
     }
   };
 
+  /* Filtering + sorting UI list */
   const filteredAndSorted = useMemo(() => {
     let result = [...tasks];
 
@@ -117,7 +150,8 @@ export default function Home({
     return result;
   }, [tasks, statusFilter, priorityFilter, sortOption]);
 
-  // Opțiuni pentru dropdown-uri
+
+  /* Dropdown options */
   const statusOptions = [
     { label: "All Statuses", value: "All" },
     { label: "Upcoming", value: "Upcoming" },
@@ -133,7 +167,7 @@ export default function Home({
     { label: "Low", value: "Low" },
   ];
 
-  const sortOptions = [
+  const sortOptionsList = [
     { label: "Deadline ↑", value: "dateAsc" },
     { label: "Deadline ↓", value: "dateDesc" },
     { label: "A → Z", value: "alphaAsc" },
@@ -158,8 +192,8 @@ export default function Home({
         renderItem={({ item }) => (
           <TaskItem
             task={item}
-            onDelete={onDelete}
-            onUpdate={onUpdate}
+            onDelete={handleDelete}
+            onUpdate={handleUpdate}
             onEdit={() => setEditingTask(item)}
           />
         )}
@@ -216,8 +250,8 @@ export default function Home({
               />
 
               <CustomDropdown
-                value={sortOptions.find(opt => opt.value === sortOption)?.label || "Sort by"}
-                options={sortOptions}
+                value={sortOptionsList.find(opt => opt.value === sortOption)?.label || "Sort by"}
+                options={sortOptionsList}
                 onSelect={setSortOption}
                 label="Sort by"
                 dark={dark}
@@ -250,121 +284,139 @@ export default function Home({
   );
 }
 
+
+/* STYLES updated with better Dark Mode contrast */
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
+  screen: { flex: 1 },
+
   container: {
     padding: 16,
     paddingBottom: Platform.OS === 'ios' ? 30 : 40,
   },
+
   viewToggle: {
     flexDirection: "row",
     marginBottom: 20,
     gap: 10,
   },
+
   viewButton: {
     padding: Platform.OS === 'ios' ? 14 : 12,
     borderRadius: 12,
     backgroundColor: "#e0e0e0",
     flex: 1,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
+
   viewButtonDark: {
     backgroundColor: "#333",
   },
+
   activeButton: {
     backgroundColor: "#007bff",
   },
+
   viewButtonText: {
     textAlign: "center",
     fontWeight: "600",
     fontSize: 16,
   },
+
   filterCard: {
     backgroundColor: "#fff",
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
   },
+
   darkCard: {
     backgroundColor: "#1e1e1e",
   },
+
   filterTitle: {
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 16,
   },
-  
-  // Styles for CustomDropdown
+
+  /* Dropdown button */
   dropdownButton: {
     backgroundColor: "#f0f0f0",
     padding: Platform.OS === 'ios' ? 14 : 12,
     borderRadius: 10,
     marginBottom: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
   },
+
   dropdownButtonDark: {
-    backgroundColor: "#333",
-    borderColor: '#444',
+    backgroundColor: "#2b2b2b",
+    borderColor: "#444",
   },
-  dropdownText: {
+
+  dropdownText: { 
+    fontSize: 16, 
+    color: "#333" 
+  },
+
+  dropdownTextDark: { 
     fontSize: 16,
-    color: '#333',
+    color: "#f1f1f1",
+    fontWeight: "500",
   },
-  dropdownTextDark: {
-    color: '#fff',
-  },
+
+  /* Modal backdrop */
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
   },
-  modalContent: {
-    backgroundColor: '#fff',
+
+  /* Dropdown list container */
+  modalContent: { 
+    backgroundColor: "#fff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '50%',
-    paddingTop: 20,
+    maxHeight: "50%",
+    paddingTop: 10,
   },
+
   modalContentDark: {
-    backgroundColor: '#1e1e1e',
+    backgroundColor: "#2d2d2d",
   },
-  option: {
+
+  /* Dropdown options */
+  option: { 
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#e0e0e0",
   },
+
   optionDark: {
-    borderBottomColor: '#333',
+    backgroundColor: "#333",
+    borderBottomColor: "#444",
   },
+
   optionText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
+
   optionTextDark: {
-    color: '#fff',
-  },
-  
-  emptyContainer: {
-    paddingVertical: 40,
-    alignItems: 'center',
-  },
-  emptyText: {
     fontSize: 16,
-    textAlign: 'center',
+    color: "#f9f9f9",
+    fontWeight: "600",
+  },
+
+  emptyContainer: { 
+    paddingVertical: 40, 
+    alignItems: "center" 
+  },
+
+  emptyText: { 
+    fontSize: 16, 
+    textAlign: "center" 
   },
 });

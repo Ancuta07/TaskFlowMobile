@@ -97,17 +97,26 @@ export default function TaskForm({
         </Text>
       </TouchableOpacity>
 
-      {isPickerVisible && (
-        <DateTimePicker
-          value={deadline || new Date()}
-          mode="datetime"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={(event, date) => {
-            setPickerVisible(false);
-            if (date) setDeadline(date);
-          }}
-        />
-      )}
+     {isPickerVisible && (
+  <View style={[
+    styles.pickerWrap,
+    dark ? styles.pickerWrapDark : styles.pickerWrapLight
+  ]}>
+    <DateTimePicker
+      value={deadline || new Date()}
+      mode="datetime"
+      display={Platform.OS === "ios" ? "spinner" : "default"}
+      themeVariant={dark ? "dark" : "light"}
+      textColor={dark ? "#fff" : "#000"}
+      onChange={(event, date) => {
+        setPickerVisible(false);
+        if (date) setDeadline(date);
+      }}
+    />
+  </View>
+)}
+
+
 
       <TextInput
         placeholder="Description"
@@ -214,26 +223,32 @@ const styles = StyleSheet.create({
     height: Platform.OS === 'ios' ? 80 : 70,
     textAlignVertical: "top",
   },
-  dateButton: {
-    backgroundColor: "#f0f0f0",
+ dateButton: {
+    backgroundColor: "#ddd", // contrast puternic light mode
     padding: Platform.OS === 'ios' ? 14 : 12,
     borderRadius: 10,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#bbb',
     alignItems: 'center',
-  },
-  dateButtonDark: {
+},
+dateButtonDark: {
     backgroundColor: "#333",
     borderColor: '#444',
-  },
-  dateButtonText: {
+},
+
+dateButtonText: {
     fontSize: 16,
-    color: '#333',
-  },
-  dateButtonTextDark: {
-    color: '#fff',
-  },
+    color: "#007bff",     // vizibil, identic cu butonul Add Task
+    fontWeight: "700",
+},
+dateButtonTextDark: {
+    fontSize: 16,
+    color: "#f1f1f1",
+    fontWeight: "600",
+},
+
+
   row: {
     flexDirection: 'column',
     gap: 16,
@@ -348,4 +363,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+pickerWrap: {
+  borderRadius: 10,
+  paddingVertical: 6,
+  marginBottom: 10,
+},
+
+pickerWrapLight: {
+  backgroundColor: "#eee",  // NU alb pur, se integrează cu light mode
+},
+
+pickerWrapDark: {
+  backgroundColor: "#2a2a2a",
+},
+
+
 });
